@@ -1,0 +1,40 @@
+{% extends 'mailings/base.html' %}
+
+{% block title %}Статистика рассылок{% endblock %}
+
+{% block content %}
+<h1>Статистика по моим рассылкам</h1>
+
+<div class="stats">
+    <p>Всего рассылок: <strong>{{ mailings_count }}</strong></p>
+    <p>Всего попыток отправки: <strong>{{ total_sent }}</strong></p>
+    <p>Успешных отправок: <strong>{{ success_count }}</strong></p>
+    <p>Неуспешных отправок: <strong>{{ fail_count }}</strong></p>
+</div>
+
+<h2>История попыток</h2>
+<table border="1" cellpadding="8">
+    <thead>
+        <tr>
+            <th>Рассылка</th>
+            <th>Время попытки</th>
+            <th>Статус</th>
+            <th>Ответ сервера</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for attempt in attempts %}
+        <tr>
+            <td>#{{ attempt.mailing_id }}</td>
+            <td>{{ attempt.attempt_time|date:"d.m.Y H:i" }}</td>
+            <td>{{ attempt.get_status_display }}</td>
+            <td>{{ attempt.server_response|truncatechars:80 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">Попыток отправки пока нет.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'mailings:home' %}">← На главную</a>
+{% endblock %}
