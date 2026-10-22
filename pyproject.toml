@@ -54,8 +54,8 @@ exclude = '''
 line_length = 119
 
 [tool.poetry]
-package-mode = false  # ← ДОБАВЬ ЭТУ СТРОКУ
+package-mode = false
 name = "mailing-service"
 version = "0.1.0"
-description = ""
-authors = ["Your Name <your.email@example.com>"]
+description = "Сервис управления рассылками"
+authors = ["Твое Имя <твоя@почта.ru>"]
