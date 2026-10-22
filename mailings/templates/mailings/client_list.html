@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Клиенты{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Получатели</h2>
+    <a href="{% url 'mailings:client_create' %}" class="btn">+ Добавить клиента</a>
+    <table>
+        <thead><tr><th>Email</th><th>ФИО</th><th>Комментарий</th></tr></thead>
+        <tbody>
+            {% for client in clients %}
+                <tr>
+                    <td>{{ client.email }}</td>
+                    <td>{{ client.full_name }}</td>
+                    <td>{{ client.comment|default:"—" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3">Клиентов пока нет.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

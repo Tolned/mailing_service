@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Статистика{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Моя статистика</h2>
+    <table>
+        <tr><td>Всего рассылок</td><td><b>{{ total_mailings }}</b></td></tr>
+        <tr><td>Активных сейчас</td><td><b>{{ active_mailings }}</b></td></tr>
+        <tr><td>Всего клиентов</td><td><b>{{ total_clients }}</b></td></tr>
+        <tr><td>Всего попыток отправки</td><td><b>{{ total_attempts }}</b></td></tr>
+        <tr><td>Успешных</td><td style="color:#5cb85c"><b>{{ success_attempts }}</b></td></tr>
+        <tr><td>Неуспешных</td><td style="color:#d9534f"><b>{{ fail_attempts }}</b></td></tr>
+    </table>
+</div>
+{% endblock %}

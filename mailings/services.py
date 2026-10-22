@@ -1,35 +1,13 @@
-from django.views.generic import DetailView, TemplateView
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
 from django.db import transaction
 
-from models import Mailing, Client, MailingAttempt
-
-
-class MailingDetailView(DetailView):
-    model = Mailing
-    template_name = "mailing/detail.html"
-
-    def get_object(self, queryset=None):
-        obj = super().get_object(queryset)
-        obj.update_status()  # Пересчет статуса
-        return obj
-
-
-class HomePageView(TemplateView):
-    template_name = "home.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Считаем общие и активные рассылки
-        context["total_mailings"] = Mailing.objects.count()
-        context["active_mailings"] = Mailing.objects.filter(status=Mailing.STATUS_STARTED).count()
-        context["unique_clients"] = Client.objects.count()
-        return context
+from .models import Mailing, MailingAttempt
 
 
 def send_mailing(mailing_id):
+    """Отправка рассылки всем получателям с записью попыток."""
     mailing = Mailing.objects.get(id=mailing_id)
 
     # 1. Проверка времени
@@ -54,11 +32,19 @@ def send_mailing(mailing_id):
                 fail_silently=False,
             )
             attempts_to_create.append(
-                MailingAttempt(mailing=mailing, status=MailingAttempt.STATUS_SUCCESS, server_response="OK")
+                MailingAttempt(
+                    mailing=mailing,
+                    status=MailingAttempt.STATUS_SUCCESS,
+                    server_response="OK"
+                )
             )
         except Exception as e:
             attempts_to_create.append(
-                MailingAttempt(mailing=mailing, status=MailingAttempt.STATUS_FAIL, server_response=str(e))
+                MailingAttempt(
+                    mailing=mailing,
+                    status=MailingAttempt.STATUS_FAIL,
+                    server_response=str(e)
+                )
             )
 
     # 3. Batch создание (согласно ТЗ)

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Рассылки{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Рассылки</h2>
+    <a href="{% url 'mailings:mailing_create' %}" class="btn">+ Создать рассылку</a>
+    <table>
+        <thead><tr><th>#</th><th>Сообщение</th><th>Старт</th><th>Окончание</th><th>Статус</th><th>Действия</th></tr></thead>
+        <tbody>
+            {% for m in mailings %}
+                <tr>
+                    <td>{{ m.pk }}</td>
+                    <td>{{ m.message.subject }}</td>
+                    <td>{{ m.start_time|date:"d.m.Y H:i" }}</td>
+                    <td>{{ m.end_time|date:"d.m.Y H:i" }}</td>
+                    <td class="status-{{ m.status }}">{{ m.get_status_display }}</td>
+                    <td>
+                        <a href="{% url 'mailings:mailing_send' m.pk %}" class="btn">▶ Запустить</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6">Рассылок пока нет.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
