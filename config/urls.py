@@ -6,8 +6,12 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
-    path('', include('core.urls')),  # Главная страница
-    path('mailings/', include('mailings.urls')),  # Все маршруты рассылок
+
+    # Подключаем главную страницу из приложения core
+    path('', include('core.urls')),
+
+    # Подключаем остальные маршруты рассылок
+    path('mailings/', include('mailings.urls')),
 ]
 
 if settings.DEBUG:

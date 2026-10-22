@@ -1,26 +1,18 @@
-"""
-Django settings for mailing_service project.
-"""
-
-import os
 from pathlib import Path
-from dotenv import load_dotenv
+from decouple import config, Csv
 
-# Определяем базовую директорию
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Явно указываем путь к файлу .env, чтобы не было ошибок поиска
-load_dotenv(BASE_DIR / '.env')
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-unsafe-default-key-for-dev-only')
 
-# Базовые настройки из .env
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key-for-dev')
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-# Разбиваем строку хостов по запятой, убираем пробелы
-ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')]
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
 # Application definition
-
 INSTALLED_APPS = [
     # Стандартные приложения Django
     'django.contrib.admin',
@@ -29,9 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # Обязательное для django-allauth
-    'django.contrib.sites',
+    'django.contrib.sites', # Обязательно для allauth
 
     # Сторонние приложения
     'allauth',
@@ -53,7 +43,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    # Middleware для allauth
+    # Middleware для allauth (обязательно для новых версий)
     'allauth.account.middleware.AccountMiddleware',
 ]
 
@@ -62,12 +52,12 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Общая папка шаблонов
+        'DIRS': [BASE_DIR / 'templates'], # Глобальная папка для шаблонов (например, для allauth)
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
-                'django.template.context_processors.request',
+                'django.template.context_processors.request', # Обязательно для allauth
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -77,74 +67,46 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'mailing_db'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'NAME': config('DB_NAME', default='mailing_db'),
+        'USER': config('DB_USER', default='postgres'),
+        'PASSWORD': config('DB_PASSWORD', default='postgres'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
     }
 }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
-
-LANGUAGE_CODE = 'ru-ru'
-
-TIME_ZONE = 'Europe/Moscow'
-
+LANGUAGE_CODE = 'ru' # Русский язык
+TIME_ZONE = 'Europe/Moscow' # Часовой пояс Москвы (важно для проверки времени рассылки!)
 USE_I18N = True
-
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static'] # Папка для ваших стилей
 
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-
 # Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 
 # =========================================================
 # НАСТРОЙКИ АУТЕНТИФИКАЦИИ (django-allauth)
 # =========================================================
-
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
@@ -152,69 +114,33 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Новые настройки для django-allauth (версия 0.64+)
-ACCOUNT_LOGIN_METHODS = {'email', 'username'}  # Вход по email или username
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # Обязательные поля
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # Эта настройка ещё актуальна
-ACCOUNT_UNIQUE_EMAIL = True  # Эта настройка ещё актуальна             # Email должен быть уникальным
+# Настройки allauth
+ACCOUNT_LOGIN_METHODS = {'email', 'username'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_VERIFICATION = "mandatory" # Обязательное подтверждение почты
+ACCOUNT_UNIQUE_EMAIL = True
 
-# Куда перенаправлять после входа/выхода
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login/'
 
 # =========================================================
-# НАСТРОЙКИ ПОЧТОВОГО СЕРВИСА
+# НАСТРОЙКИ ПОЧТЫ (из вашего кода)
 # =========================================================
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = os.getenv('EMAIL_HOST', '')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False') == 'True'
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'test@example.com')
-
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='')
+EMAIL_PORT = config('EMAIL_PORT', default=465, cast=int)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=True, cast=bool)
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@example.com')
 
 # =========================================================
-# НАСТРОЙКИ КЕШИРОВАНИЯ (Часть 2)
+# НАСТРОЙКИ КЕШИРОВАНИЯ
 # =========================================================
-
-# Локальное кеширование в памяти (для разработки)
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+        'LOCATION': 'mailing-service-cache',
     }
-}
-
-# Когда подключите Redis, замените на:
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://127.0.0.1:6379/1",
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         }
-#     }
-# }
-
-
-# =========================================================
-# НАСТРОЙКИ ЛОГИРОВАНИЯ (для отладки SQL-запросов)
-# =========================================================
-
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'loggers': {
-        'django.db.backends': {
-            'handlers': ['console'],
-            'level': 'WARNING',  # Измените на 'DEBUG', чтобы видеть все SQL-запросы
-        },
-    },
 }

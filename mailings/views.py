@@ -1,17 +1,36 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, CreateView, DetailView, TemplateView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect
+from django.views.generic import DetailView, TemplateView
 from django.contrib import messages
 from django.urls import reverse_lazy
-from django.utils import timezone
 
-from .models import Client, Message, Mailing, MailingAttempt
+from .models import MailingAttempt
 from .forms import ClientForm, MessageForm, MailingForm
 from .services import send_mailing
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import ListView, CreateView
+from .models import Client, Message, Mailing
 
+class OwnerOnlyMixin:
+    """Разрешает полный доступ менеджерам, остальным - только свои объекты"""
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.request.user.profile.role == 'manager':
+            return qs
+        return qs.filter(owner=self.request.user)
+
+    def form_valid(self, form):
+        # Автоматически назначаем владельца при создании
+        if not form.instance.owner_id:
+            form.instance.owner = self.request.user
+        return super().form_valid(form)
+
+class ClientListView(LoginRequiredMixin, OwnerOnlyMixin, ListView):
+    model = Client
+    template_name = 'mailings/client_list.html'
+    context_object_name = 'clients'
 
 # ============================================================
-# МИКСИН: Фильтрация по владельцу (обычный юзер видит только своё)
+# МИКСИН: Фильтрация по владельцу
 # ============================================================
 class OwnerFilterMixin(LoginRequiredMixin):
     """Пользователь видит только свои объекты, менеджер — все."""
