@@ -1,39 +1,16 @@
-from django.shortcuts import redirect
-from django.views.generic import DetailView, TemplateView
-from django.contrib import messages
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
+from django.contrib import messages
+from django.shortcuts import redirect
 
-from .models import MailingAttempt
+from .models import Client, Message, Mailing, MailingAttempt
 from .forms import ClientForm, MessageForm, MailingForm
 from .services import send_mailing
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView, CreateView
-from .models import Client, Message, Mailing
 
-class OwnerOnlyMixin:
-    """Разрешает полный доступ менеджерам, остальным - только свои объекты"""
-    def get_queryset(self):
-        qs = super().get_queryset()
-        if self.request.user.profile.role == 'manager':
-            return qs
-        return qs.filter(owner=self.request.user)
 
-    def form_valid(self, form):
-        # Автоматически назначаем владельца при создании
-        if not form.instance.owner_id:
-            form.instance.owner = self.request.user
-        return super().form_valid(form)
-
-class ClientListView(LoginRequiredMixin, OwnerOnlyMixin, ListView):
-    model = Client
-    template_name = 'mailings/client_list.html'
-    context_object_name = 'clients'
-
-# ============================================================
-# МИКСИН: Фильтрация по владельцу
-# ============================================================
 class OwnerFilterMixin(LoginRequiredMixin):
-    """Пользователь видит только свои объекты, менеджер — все."""
+    """Пользователь видит и редактирует только свои объекты, менеджер — все."""
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -68,6 +45,19 @@ class ClientCreateView(OwnerFilterMixin, CreateView):
         return context
 
 
+class ClientUpdateView(OwnerFilterMixin, UpdateView):
+    model = Client
+    form_class = ClientForm
+    template_name = 'mailings/client_form.html'
+    success_url = reverse_lazy('mailings:client_list')
+
+
+class ClientDeleteView(OwnerFilterMixin, DeleteView):
+    model = Client
+    template_name = 'mailings/client_confirm_delete.html'  # Убедитесь, что этот шаблон есть, или удалите этот класс, если удаление не требуется строго
+    success_url = reverse_lazy('mailings:client_list')
+
+
 # ============================================================
 # СООБЩЕНИЯ
 # ============================================================
@@ -90,6 +80,19 @@ class MessageCreateView(OwnerFilterMixin, CreateView):
         return context
 
 
+class MessageUpdateView(OwnerFilterMixin, UpdateView):
+    model = Message
+    form_class = MessageForm
+    template_name = 'mailings/message_form.html'
+    success_url = reverse_lazy('mailings:message_list')
+
+
+class MessageDeleteView(OwnerFilterMixin, DeleteView):
+    model = Message
+    template_name = 'mailings/message_confirm_delete.html'
+    success_url = reverse_lazy('mailings:message_list')
+
+
 # ============================================================
 # РАССЫЛКИ
 # ============================================================
@@ -99,11 +102,9 @@ class MailingListView(OwnerFilterMixin, ListView):
     context_object_name = 'mailings'
     paginate_by = 10
 
-    def get_queryset(self):
-        qs = super().get_queryset()
-        for m in qs:
-            m.update_status()
-        return qs
+    # Примечание: Мы НЕ вызываем m.update_status() здесь в цикле,
+    # так как это вызывает сохранение в БД при каждом просмотре страницы (ошибка N+1).
+    # Статус должен вычисляться динамически через property в модели или при сохранении.
 
 
 class MailingCreateView(OwnerFilterMixin, CreateView):
@@ -118,6 +119,19 @@ class MailingCreateView(OwnerFilterMixin, CreateView):
         return context
 
 
+class MailingUpdateView(OwnerFilterMixin, UpdateView):
+    model = Mailing
+    form_class = MailingForm
+    template_name = 'mailings/mailing_form.html'
+    success_url = reverse_lazy('mailings:mailing_list')
+
+
+class MailingDeleteView(OwnerFilterMixin, DeleteView):
+    model = Mailing
+    template_name = 'mailings/mailing_confirm_delete.html'
+    success_url = reverse_lazy('mailings:mailing_list')
+
+
 class MailingSendView(LoginRequiredMixin, DetailView):
     """Запуск рассылки вручную."""
     model = Mailing
@@ -126,7 +140,6 @@ class MailingSendView(LoginRequiredMixin, DetailView):
     def get(self, request, *args, **kwargs):
         mailing = self.get_object()
 
-        # Проверка владельца (менеджер может всё)
         if request.user.profile.role != 'manager' and mailing.owner != request.user:
             messages.error(request, 'У вас нет прав на эту рассылку.')
             return redirect('mailings:mailing_list')
@@ -164,16 +177,10 @@ class UserStatsView(LoginRequiredMixin, TemplateView):
         attempts = MailingAttempt.objects.filter(mailing__in=mailings)
 
         context['total_mailings'] = mailings.count()
-        context['active_mailings'] = mailings.filter(
-            status=Mailing.STATUS_STARTED
-        ).count()
+        context['active_mailings'] = mailings.filter(status=Mailing.STATUS_STARTED).count()
         context['total_clients'] = clients.count()
         context['total_attempts'] = attempts.count()
-        context['success_attempts'] = attempts.filter(
-            status=MailingAttempt.STATUS_SUCCESS
-        ).count()
-        context['fail_attempts'] = attempts.filter(
-            status=MailingAttempt.STATUS_FAIL
-        ).count()
+        context['success_attempts'] = attempts.filter(status=MailingAttempt.STATUS_SUCCESS).count()
+        context['fail_attempts'] = attempts.filter(status=MailingAttempt.STATUS_FAIL).count()
 
         return context
