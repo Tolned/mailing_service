@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение удаления</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: #f4f4f9; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .confirm-box { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 450px; 
+            text-align: center;
+        }
+        h2 { 
+            color: #d9534f; 
+            margin-bottom: 15px; 
+            font-size: 24px;
+        }
+        p { 
+            color: #555; 
+            margin-bottom: 30px; 
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        .btn { 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.3s;
+        }
+        .btn-danger { 
+            background: #d9534f; 
+            color: white; 
+        }
+        .btn-danger:hover { 
+            background: #c9302c; 
+        }
+        .btn-secondary { 
+            background: #6c757d; 
+            color: white; 
+        }
+        .btn-secondary:hover { 
+            background: #5a6268; 
+        }
+        .warning-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="confirm-box">
+        <div class="warning-icon">⚠️</div>
+        <h2>Подтверждение удаления</h2>
+        <p>Вы уверены, что хотите удалить этот объект?<br>Это действие нельзя будет отменить.</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="actions">
+                <button type="submit" class="btn btn-danger">Да, удалить</button>
+                <a href="javascript:history.back()" class="btn btn-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

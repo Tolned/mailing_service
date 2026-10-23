@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход в систему</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .auth-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #333; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="password"], input[type="email"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        input:focus { border-color: #417690; outline: none; }
+        button { width: 100%; padding: 12px; background: #417690; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #305a6e; }
+        .links { text-align: center; margin-top: 20px; font-size: 14px; }
+        .links a { color: #417690; text-decoration: none; margin: 0 10px; }
+    </style>
+</head>
+<body>
+    <div class="auth-box">
+        <h2>Вход в систему</h2>
+        <form method="post" action="{% url 'account_login' %}">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    <label>{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<small style="color:red">{{ field.errors|join:", " }}</small>{% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit">Войти</button>
+        </form>
+        <div class="links">
+            <a href="{% url 'account_reset_password' %}">Забыли пароль?</a>
+            <a href="{% url 'account_signup' %}">Регистрация</a>
+        </div>
+    </div>
+</body>
+</html>

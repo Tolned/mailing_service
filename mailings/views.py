@@ -184,3 +184,42 @@ class UserStatsView(LoginRequiredMixin, TemplateView):
         context['fail_attempts'] = attempts.filter(status=MailingAttempt.STATUS_FAIL).count()
 
         return context
+
+
+from django.views.generic import UpdateView, DeleteView
+
+# --- КЛИЕНТЫ ---
+class ClientUpdateView(OwnerFilterMixin, UpdateView):
+    model = Client
+    form_class = ClientForm
+    template_name = 'mailings/client_form.html'
+    success_url = reverse_lazy('mailings:client_list')
+
+class ClientDeleteView(OwnerFilterMixin, DeleteView):
+    model = Client
+    template_name = 'mailings/object_confirm_delete.html'
+    success_url = reverse_lazy('mailings:client_list')
+
+# --- СООБЩЕНИЯ ---
+class MessageUpdateView(OwnerFilterMixin, UpdateView):
+    model = Message
+    form_class = MessageForm
+    template_name = 'mailings/message_form.html'
+    success_url = reverse_lazy('mailings:message_list')
+
+class MessageDeleteView(OwnerFilterMixin, DeleteView):
+    model = Message
+    template_name = 'mailings/object_confirm_delete.html'
+    success_url = reverse_lazy('mailings:message_list')
+
+# --- РАССЫЛКИ ---
+class MailingUpdateView(OwnerFilterMixin, UpdateView):
+    model = Mailing
+    form_class = MailingForm
+    template_name = 'mailings/mailing_form.html'
+    success_url = reverse_lazy('mailings:mailing_list')
+
+class MailingDeleteView(OwnerFilterMixin, DeleteView):
+    model = Mailing
+    template_name = 'mailings/object_confirm_delete.html'
+    success_url = reverse_lazy('mailings:mailing_list')
